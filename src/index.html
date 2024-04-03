@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera App</title>
+</head>
+<body>
+    <button id="capture-btn">Capture Image</button>
+    <img id="captured-image" src="" alt="Captured image will appear here">
+    <script>
+        document.getElementById('capture-btn').addEventListener('click', function() {
+            fetch('http://SERVER_IP:5000/capture-image')
+                .then(response => response.blob())
+                .then(imageBlob => {
+                    const imageUrl = URL.createObjectURL(imageBlob);
+                    document.getElementById('captured-image').src = imageUrl;
+                });
+        });
+    </script>
+</body>
+</html>
