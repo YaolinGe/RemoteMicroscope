@@ -1,20 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Camera App</title>
+    <meta charset="UTF-8">
+    <title>Camera Viewer</title>
 </head>
+
 <body>
-    <button id="capture-btn">Capture Image</button>
-    <img id="captured-image" src="" alt="Captured image will appear here">
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; width: 80vw;  margin: auto auto;">
+        <div id="imagePlaceholder" style="width: 100%; height: 100%; border: 1px solid black; "></div>
+        <button id="fetchButton">Fetch Image</button>
+    </div>
+
     <script>
-        document.getElementById('capture-btn').addEventListener('click', function() {
-            fetch('http://SERVER_IP:5000/capture-image')
-                .then(response => response.blob())
-                .then(imageBlob => {
-                    const imageUrl = URL.createObjectURL(imageBlob);
-                    document.getElementById('captured-image').src = imageUrl;
+        const imagePlaceholder = document.getElementById('imagePlaceholder');
+        const fetchButton = document.getElementById('fetchButton');
+
+        fetchButton.addEventListener('click', () => {
+            fetch('http://138.103.116.99:5000/capture-image', { mode: 'no-cors' })
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    } else {
+                        throw new Error('Failed to fetch image');
+                    }
+                })
+                .then(blob => {
+                    const imageUrl = URL.createObjectURL(blob);
+                    imagePlaceholder.innerHTML = `<img src="${imageUrl}" style="width: 100%; height: 100%;" />`;
+                })
+                .catch(error => {
+                    alert(error.message);
                 });
         });
     </script>
 </body>
+
 </html>
