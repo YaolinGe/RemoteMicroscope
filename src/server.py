@@ -9,7 +9,7 @@ import tempfile
 clean()
 
 app = Flask(__name__)
-# CORS(app)
+CORS(app)
 # CORS(app, resources={r"/capture-image": {"origins": "http://yourClientOriginHere"}})  # if you want to restrict the origin
 
 @app.route("/")
