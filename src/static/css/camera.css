@@ -1,0 +1,52 @@
+.camera-card {
+    border: 1px solid #ccc;
+    border-radius: 2rem; ;
+    padding: 1rem; 
+    margin: 0 auto; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 80vw; 
+    height: 30vh; 
+}
+
+.camera-info {
+    margin-top: 10px;
+    display: flex; 
+    flex-direction: row; 
+}
+
+.camera-index {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+button {
+    color: white;
+    background-color: #4CAF50;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+}
+
+button:hover {
+    background-color: #45a049;
+    cursor: pointer;
+}
+
+button:active {
+    background-color: #d27c31;
+}
+
+button:link {
+    background-color: #20a7be;
+    text-decoration: none;
+    color: red;
+}
+
+button:visited {
+    background-color: #2cddc0;
+    text-decoration: none;
+    color: purple;
+}
