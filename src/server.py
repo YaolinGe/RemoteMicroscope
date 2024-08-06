@@ -1,10 +1,14 @@
 from flask import Flask, send_file, render_template
 from flask_cors import CORS
 import cv2
-from src.clean import clean
 
 import os
 import tempfile
+
+def clean(): 
+    if os.path.exists('captured_image.jpg'):
+        os.remove('captured_image.jpg')
+        print('File removed')
 
 clean()
 

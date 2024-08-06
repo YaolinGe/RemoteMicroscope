@@ -1,16 +1,22 @@
-# RemoteMicroscope
+# Remote Microscope Server app 
 
-# Setup on windows environment
-`python -m venv venv` to create a virtual environment.
+This is a server side application for the Remote Microscope project.
 
-`python.exe -m pip install --upgrade pip` to upgrade pip.
+## Setup on windows environment
+`.\setup.bat` to create a virtual environment and install the dependencies.
 
-`.\venv\Scripts\Activate.ps1` to activate the virtual environment.
+## Running the server
+`.\run.bat` to run the server.
 
-`pip install -r requirements.txt` to install the dependencies.
+## Checking the results
+Open the browser and navigate to `http://{HOST IP ADDRESS}:8123/` to see the results.
+ 
+To get the host IP address, you can use the `ipconfig` command in the command prompt. Here's how you can do it:
 
-## Server side
-`flask --app server run` to deploy it to the server. 
+1. Open the command prompt by pressing `Win + R` and typing `cmd`.
+2. In the command prompt, type `ipconfig` and press Enter.
+3. Look for the "IPv4 Address" under the "Ethernet adapter" or "Wireless LAN adapter" section. This is your host IP address.
 
-## Client side
-`open index.html` to launch it from the client side. 
+Once you have the host IP address, you can use it to navigate to `http://{HOST IP ADDRESS}:8123/` in your browser to see the results.
+
+Let me know if you need further assistance!
