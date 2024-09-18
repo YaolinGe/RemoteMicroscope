@@ -1,8 +1,7 @@
 import sys
 from waitress import serve
 import logging
-# from src.server import app
-from src.serverHighResolution import app
+from src.server import CameraApp
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,7 +14,10 @@ logger = logging.getLogger(__name__)
 
 host = '0.0.0.0'
 
+# Instantiate the CameraApp class
+camera_app = CameraApp()
+
 # Start the server
 logger.info("Starting server...")
-serve(app, host=host, port=8123)
+serve(camera_app.app, host=host, port=8123)
 logger.info("Server started.")
