@@ -10,7 +10,7 @@
     <h1>Cameras available</h1>
     <div class="camera-grid">
         {% for camera in cameras %}
-        <div class="camera-card" style="position: relative; width: 50vw; height: 28vw; overflow: hidden; border: 1px solid #ddd; box-sizing: border-box;">
+        <div class="camera-card" style="position: relative; width: 50vw; height: auto; overflow: hidden; border: 1px solid #ddd; box-sizing: border-box;">
             <h2 class="camera-index">Camera ID: {{ camera['index'] }}</h2>
             <div class="camera-info">
                 <p>Width: {{ camera['width'] }}</p>
