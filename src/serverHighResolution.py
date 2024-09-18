@@ -1,4 +1,4 @@
-from flask import Flask, send_file, render_template, request
+from flask import Flask, send_file, render_template, request, Response
 from flask_cors import CORS
 import cv2
 import os
@@ -6,13 +6,7 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-def clean():
-    if os.path.exists('captured_image.jpg'):
-        os.remove('captured_image.jpg')
-        print('File removed')
-
-clean()
-
+# Backend type for Windows (MSMF recommended for Windows)
 BACKEND = cv2.CAP_MSMF
 
 # Define default highest resolution
@@ -33,7 +27,7 @@ def set_camera_resolution(cap, width, height):
     return actual_width, actual_height
 
 @app.route("/")
-def list_all_cameras(): 
+def list_all_cameras():
     """ Render camera list with capture button in each camera section """
     cameras = []
     for i in range(2):  # Check the first two cameras (can be adjusted)
@@ -87,6 +81,29 @@ def capture_image():
     cap.release()
 
     return send_file(filename, mimetype='image/jpeg')
+
+# Video stream generator function
+def generate_frames(camera_index):
+    cap = cv2.VideoCapture(camera_index, BACKEND)
+    
+    if not cap.isOpened():
+        return "Camera not found", 404
+
+    while True:
+        success, frame = cap.read()
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+@app.route('/video_feed/<int:camera_index>')
+def video_feed(camera_index):
+    """Video streaming route."""
+    return Response(generate_frames(camera_index), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
