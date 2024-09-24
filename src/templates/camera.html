@@ -7,31 +7,28 @@
 </head>
 
 <body>
-    <h1>Cameras available</h1>
-    <div class="camera-grid">
-        {% for camera in cameras %}
-        <div class="camera-card">
-            <h2 class="camera-index">Camera ID: {{ camera['index'] }}</h2>
-            <div class="camera-info">
-                <p>Width: {{ camera['width'] }} </p>
-                <p>Height: {{ camera['height'] }} </p>
-                <p>Frame rate (FPS): {{ camera['fps'] }} </p>
-                <p>FourCC: {{ camera['fourcc'] }} </p>
-                <p>Backend: {{ camera['backend'] }} </p>
-                <p>Active: {{ camera['is_opened'] }} </p>
-            </div>
-
-            <!-- Stream video from camera -->
-            <img src="{{ url_for('video_feed', camera_index=camera['index']) }}" alt="Camera {{ camera['index'] }} stream" style="width: 100%; height: 100%; object-fit: cover;">
-
-            <!-- Capture button -->
-            <form action="/capture" method="post" style="margin-top: 10px;">
-                <input type="hidden" name="camera_index" value="{{ camera['index'] }}">
-                <button type="submit">Capture Image</button>
-            </form>
+    {% for camera in cameras %}
+    <div class="camera-card">
+        <h2 class="camera-index">Camera ID: {{ camera['index'] }}</h2>
+        <div class="camera-info">
+            <p>Width: {{ camera['width'] }} </p>
+            <p>Height: {{ camera['height'] }} </p>
+            <p>Frame rate (FPS): {{ camera['fps'] }} </p>
+            <p>FourCC: {{ camera['fourcc'] }} </p>
+            <p>Backend: {{ camera['backend'] }} </p>
+            <p>Active: {{ camera['is_opened'] }} </p>
         </div>
-        {% endfor %}
+
+        <img src="{{ url_for('video_feed', camera_index=camera['index']) }}" alt="Camera {{ camera['index'] }} stream" class="camera-image">
+
+        <form action="/capture" method="post" style="margin-top: 10px;">
+            <input type="hidden" name="camera_index" value="{{ camera['index'] }}">
+            <label for="filename">Filename:</label>
+            <input type="text" id="filename" name="filename" required>
+            <button type="submit">Capture Image</button>
+        </form>
     </div>
+    {% endfor %}
     <script src="{{ url_for('static', filename='javascript/camera.js') }}"></script>
 </body>
 

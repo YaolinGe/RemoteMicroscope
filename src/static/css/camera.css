@@ -1,37 +1,46 @@
 .camera-card {
-    border: 1px solid #ccc;
-    border-radius: 2rem; ;
-    padding: 1rem; 
+    /* border: 1px solid #ccc; */
+    /* border-radius: 2rem; ; */
+    padding: 0; 
     margin: 0 auto; 
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    width: 50vw; 
-    height: auto; 
+    /* width: 50vw;  */
+    height: 50vh; 
+    /* overflow: hidden; */
 }
 
 .camera-info {
     margin-top: 10px;
     display: flex; 
     flex-direction: row; 
+    gap: 1rem; 
+    color: #A08C64;
 }
 
 .camera-index {
     font-weight: bold;
     font-size: 18px;
+    color: #A08C64;
+}
+
+.camera-image {
+    height: 60vh; 
+    object-fit: cover;
 }
 
 button {
     color: white;
-    background-color: #4CAF50;
+    background-color: #A08C64;
     border: none;
     padding: 10px 20px;
     border-radius: 20px;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #9d9d9d;
     cursor: pointer;
 }
 
@@ -51,8 +60,3 @@ button:visited {
     color: purple;
 }
 
-.success-message {
-    color: green;
-    font-size: 24px;
-    margin-bottom: 20px;
-}

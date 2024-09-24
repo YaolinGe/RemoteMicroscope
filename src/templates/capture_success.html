@@ -9,18 +9,12 @@
 </head>
 
 <body>
-    <div class="camera-card" style="display: flex; flex-direction: column; gap: 1rem;">
-        <div class="success-message">Capture Successful!</div>
-        <img src="../static/images/camera_{{ camera_index }}.jpg" alt="Captured Image"
-            style="width: 100%; height: auto;">
+    <div class="camera-card" style="gap: 1rem; ">
+        <div class="camera-index">Capture Successfully! Image saved as {{filename}} successfully!</div>
+        <img src="../static/images/{{ filename }}.jpg" alt="Captured Image" class="camera-image">
         <button onclick="window.location.href = '/';">Back to Cameras</button>
-        <form action="{{ url_for('save_image') }}" method="post" style="display: flex; flex-direction: row; gap: 1rem;">
-            <label for="filename" style="align-self: center;">Filename: </label>
-            <input type="text" name="filename" id="filename" value="camera_{{ camera_index }}" />
-            <input type="hidden" name="camera_index" value="{{ camera_index }}">
-            <button type="submit">Save</button>
-        </form>
     </div>
 </body>
 
 </html>
+
