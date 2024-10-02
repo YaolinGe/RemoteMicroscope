@@ -1,35 +1,50 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Camera App</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/camera.css') }}">
 </head>
-
 <body>
-    {% for camera in cameras %}
+    <div>
+        <form id="camera-form" action="{{ url_for('stream_camera') }}" method="post">
+            <label for="camera-select">Choose a Camera:</label>
+            <select id="camera-select" name="camera_index" onchange="this.form.submit()">
+                {% for camera in cameras.values() %}
+                    <option value="{{ camera['index'] }}" {% if camera['index'] == selected_camera %}selected{% endif %}>
+                        Camera {{ camera['index'] }} ({{ camera['width'] }}x{{ camera['height'] }}, FPS: {{ camera['fps']|round(2) }})
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
     <div class="camera-card">
-        <h2 class="camera-index">Camera ID: {{ camera['index'] }}</h2>
+        <h2 class="camera-index">Camera ID: {{ selected_camera }}</h2>
         <div class="camera-info">
-            <p>Width: {{ camera['width'] }} </p>
-            <p>Height: {{ camera['height'] }} </p>
-            <p>Frame rate (FPS): {{ camera['fps'] }} </p>
-            <p>FourCC: {{ camera['fourcc'] }} </p>
-            <p>Backend: {{ camera['backend'] }} </p>
-            <p>Active: {{ camera['is_opened'] }} </p>
+            {% if selected_camera in cameras %}
+                {% set camera = cameras[selected_camera] %}
+                <p>Width: {{ camera['width'] }} </p>
+                <p>Height: {{ camera['height'] }} </p>
+                <p>Frame rate (FPS): {{ camera['fps']|round(2) }} </p>
+                <p>FourCC: {{ '%08X'|format(camera['fourcc']) }} </p>
+                <p>Backend: {{ camera['backend'] }} </p>
+                <p>Active: {{ camera['is_opened'] }} </p>
+            {% else %}
+                <p>No camera selected or camera information not available.</p>
+            {% endif %}
         </div>
 
-        <img src="{{ url_for('video_feed', camera_index=camera['index']) }}" alt="Camera {{ camera['index'] }} stream" class="camera-image">
+        <div id="loading-spinner" class="spinner" style="display: block;"></div>
+        <img id="camera-feed" src="{{ url_for('video_feed', camera_index=selected_camera) }}" alt="Camera stream" class="camera-image" style="display:none;">
 
-        <form action="/capture" method="post" style="margin-top: 10px;">
-            <input type="hidden" name="camera_index" value="{{ camera['index'] }}">
+        <form action="{{ url_for('capture_image') }}" method="post" style="margin-top: 10px;">
+            <input type="hidden" name="camera_index" value="{{ selected_camera }}">
             <label for="filename">Filename:</label>
             <input type="text" id="filename" name="filename" required>
             <button type="submit">Capture Image</button>
         </form>
     </div>
-    {% endfor %}
+
     <script src="{{ url_for('static', filename='javascript/camera.js') }}"></script>
 </body>
-
 </html>

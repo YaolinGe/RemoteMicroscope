@@ -1,113 +1,101 @@
-from flask import Flask, send_file, render_template, request, Response, redirect, url_for, jsonify
+from flask import Flask, send_file, render_template, request, Response, jsonify, redirect, url_for
 from flask_cors import CORS
 import cv2
 import os
 import base64
+import asyncio
+import time
+
 
 class CameraApp:
     def __init__(self):
         self.app = Flask(__name__)
         CORS(self.app)
         self.BACKEND = cv2.CAP_MSMF
-        self.DEFAULT_RESOLUTION = (3840, 2160)  # Example: 4K UHD
-        self.setup_routes()
+        self.DEFAULT_RESOLUTION = (3840, 2160)
+        self.camera_cache = {}
+        self.camera_cache_time = 0
+        self.CACHE_DURATION = 600
+        self.initialize_app()
 
-    def setup_routes(self):
-        self.app.add_url_rule("/", "list_all_cameras", self.list_all_cameras)
+    def initialize_app(self):
+        self.app.add_url_rule("/", "stream_camera", self.stream_camera, methods=['GET', 'POST'])
         self.app.add_url_rule('/capture', 'capture_image', self.capture_image, methods=['POST'])
         self.app.add_url_rule('/video_feed/<int:camera_index>', 'video_feed', self.video_feed)
-        self.app.add_url_rule('/list_cameras', 'list_all_cameras_to_razor', self.list_all_cameras_to_razor)
+        self.app.add_url_rule('/list_cameras', 'list_all_cameras_to_razor', self.list_all_cameras_to_razor, methods=['GET'])
+        self.app.add_url_rule('/ping', 'ping', self.ping, methods=['GET'])
+        self.ping(initialize=True)
+        asyncio.run(self.initialize_cameras())
+
+    async def initialize_cameras(self):
+        cameras = await asyncio.gather(*(self.setup_camera(i) for i in range(2)))
+        self.camera_cache = {i: camera for i, camera in enumerate(cameras) if camera is not None}
+        self.camera_cache_time = time.time()
+
+    async def setup_camera(self, index):
+        try:
+            cap = cv2.VideoCapture(index, self.BACKEND)
+            if cap.isOpened():
+                width, height = self.DEFAULT_RESOLUTION
+                actual_width, actual_height = self.set_camera_resolution(cap, width, height)
+                camera_info = {
+                    'index': index,
+                    'width': actual_width,
+                    'height': actual_height,
+                    'fps': cap.get(cv2.CAP_PROP_FPS),
+                    'fourcc': int(cap.get(cv2.CAP_PROP_FOURCC)),
+                    'backend': cap.getBackendName(),
+                    'is_opened': cap.isOpened(),
+                    'cap': cap
+                }
+                return camera_info
+        except Exception as e:
+            print(f"Error setting up camera {index}: {e}")
+        return None
 
     def set_camera_resolution(self, cap, width, height):
-        """ Set the resolution for the camera and ensure it actually sets """
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
-        # Get the actual resolution from the camera after setting
         actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-        print(f"Requested resolution: {width}x{height}")
-        print(f"Actual resolution: {actual_width}x{actual_height}")
+        print(f"Camera resolution set to: {actual_width}x{actual_height}")
         return actual_width, actual_height
 
-    def list_all_cameras(self):
-        """ Render camera list with capture button in each camera section """
-        cameras = []
-        for i in range(2):  # Check the first two cameras (can be adjusted)
-            try:
-                cap = cv2.VideoCapture(i, self.BACKEND) 
-                if cap.isOpened():
-                    cameras.append({
-                        'index': i,
-                        'width': int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                        'height': int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-                        'fps': cap.get(cv2.CAP_PROP_FPS),
-                        'fourcc': int(cap.get(cv2.CAP_PROP_FOURCC)),
-                        'backend': cap.getBackendName(),
-                        'is_opened': cap.isOpened() 
-                    })
-                    cap.release()
-            except Exception as e:
-                print(f"Error accessing camera {i}: {e}")
-                continue
-        return render_template('camera.html', cameras=cameras)
+    def ping(self, initialize=False):
+        if not initialize:
+            return "pong"
 
-    def list_all_cameras_to_razor(self):
-        """ Return a list of all available cameras in JSON format """
-        cameras = []
-        for i in range(2):  # Example: check first two cameras (can be adjusted)
-            try:
-                cap = cv2.VideoCapture(i, self.BACKEND)
-                if cap.isOpened():
-                    cameras.append({
-                        'index': i,
-                        'width': int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                        'height': int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-                        'fps': cap.get(cv2.CAP_PROP_FPS),
-                        'fourcc': int(cap.get(cv2.CAP_PROP_FOURCC)),
-                        'backend': cap.getBackendName(),
-                        'is_opened': cap.isOpened()
-                    })
-                    cap.release()
-            except Exception as e:
-                print(f"Error accessing camera {i}: {e}")
-                continue
-        return jsonify(cameras)
+    def stream_camera(self):
+        if request.method == 'POST':
+            data = request.get_json()
+            selected_camera = data.get('camera_index', 0)
+        else:
+            selected_camera = 0
+        if selected_camera not in self.camera_cache:
+            selected_camera = next(iter(self.camera_cache)) if self.camera_cache else 0
+        return render_template('camera.html', cameras=self.camera_cache, selected_camera=selected_camera)
 
     def capture_image(self):
-        # Get the selected camera index
         camera_index = int(request.form.get('camera_index'))
         fileName = request.form.get('filename', 'camera_default')
 
-        cap = cv2.VideoCapture(camera_index, self.BACKEND)
-
-        if not cap.isOpened():
+        if camera_index not in self.camera_cache:
             return "Camera not found", 404
 
-        # Set the camera to the highest default resolution
-        width, height = self.DEFAULT_RESOLUTION
-        actual_width, actual_height = self.set_camera_resolution(cap, width, height)
-
-        # Fallback: Use actual resolution if it's different from the default one
-        if (actual_width, actual_height) != (width, height):
-            print(f"Warning: Desired resolution {width}x{height} not supported. Using {actual_width}x{actual_height} instead.")
-
-        # Capture the image
+        cap = self.camera_cache[camera_index]['cap']
         ret, frame = cap.read()
 
-        # If the frame is not captured, inform the user
         if not ret or frame is None:
-            cap.release()
-            return "Failed to capture image. The camera might not support the selected resolution.", 500
+            return "Failed to capture image.", 500
 
         filename = os.path.join(os.getcwd(), 'src', 'static', 'images', f'{fileName}.jpg')
-        cv2.imwrite(filename, frame)  # Save the captured image
-
-        cap.release()
+        cv2.imwrite(filename, frame)
 
         _, buffer = cv2.imencode('.jpg', frame)
         base64_image = base64.b64encode(buffer).decode('utf-8')
+
+        actual_width = self.camera_cache[camera_index]['width']
+        actual_height = self.camera_cache[camera_index]['height']
 
         return jsonify({
             "message": "Image captured successfully",
@@ -115,7 +103,30 @@ class CameraApp:
             "imageData": base64_image,
             "resolution": f"{actual_width}x{actual_height}"
         })
-        # return render_template('capture_success.html', camera_index=camera_index, filename=fileName)
+
+    async def list_all_cameras_to_razor(self):
+        if time.time() - self.camera_cache_time > self.CACHE_DURATION:
+            await self.initialize_cameras()
+        return jsonify([{k: v for k, v in camera.items() if k != 'cap'} for camera in self.camera_cache.values()])
+
+    async def check_camera(self, i, backend):
+        try:
+            cap = cv2.VideoCapture(i, backend)
+            if cap.isOpened():
+                camera_info = {
+                    'index': i,
+                    'width': int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                    'height': int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+                    'fps': cap.get(cv2.CAP_PROP_FPS),
+                    'fourcc': int(cap.get(cv2.CAP_PROP_FOURCC)),
+                    'backend': cap.getBackendName(),
+                    'is_opened': cap.isOpened()
+                }
+                cap.release()
+                return camera_info
+        except Exception as e:
+            print(f"Error accessing camera {i}: {e}")
+        return None
 
     def generate_frames(self, camera_index):
         cap = cv2.VideoCapture(camera_index, self.BACKEND)
@@ -135,11 +146,11 @@ class CameraApp:
                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
     def video_feed(self, camera_index):
-        """Video streaming route."""
         return Response(self.generate_frames(camera_index), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-    def run(self, debug: bool =False):
+    def run(self, debug: bool = False):
         self.app.run(host='0.0.0.0', port=8123, debug=debug)
+
 
 if __name__ == '__main__':
     camera_app = CameraApp()
