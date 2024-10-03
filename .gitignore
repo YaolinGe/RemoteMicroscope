@@ -6,3 +6,10 @@ __pycache__/
 **/dependencies/
 **/dependencies/*
 **/dependencies/**/*
+
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
