@@ -19,7 +19,6 @@ class CameraApp:
         self.camera_status = "initializing"
         self.initialize_app()
 
-
     def initialize_app(self):
         self.app.add_url_rule("/", "stream_camera", self.stream_camera, methods=['GET', 'POST'])
         self.app.add_url_rule('/initialize_camera/<int:camera_index>', 'initialize_camera', self.initialize_camera, methods=['POST'])
